@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CWSN Portal — MCPS JJ Shadipur</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --card: #1a2236;
+    --border: #243048;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --accent3: #8b5cf6;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --dim: #64748b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 600px 400px at 80% 80%, rgba(139,92,246,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 400px 300px at 60% 40%, rgba(6,182,212,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(17,24,39,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  }
+  .logo-text h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+  .logo-text p {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #2563eb);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59,130,246,0.4); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--card); color: var(--text); }
+  .btn-success {
+    background: linear-gradient(135deg, var(--green), #059669);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+  }
+  .btn-success:hover { transform: translateY(-1px); }
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+  /* MAIN */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.blue::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--accent3), #a78bfa); }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--green), #34d399); }
+  .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), #fbbf24); }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; line-height: 1; }
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.purple { color: var(--accent3); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-sub { font-size: 12px; color: var(--dim); margin-top: 6px; }
+
+  /* TABS */
+  .tabs-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    width: fit-content;
+  }
+  .tab-btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Sora', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent), #2563eb);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+  }
+  .tab-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 380px;
+  }
+  .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--dim); }
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 38px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--dim); }
+  .filter-select {
+    padding: 9px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    min-width: 140px;
+  }
+  .filter-select option { background: var(--surface); }
+  .spacer { flex: 1; }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead { position: sticky; top: 0; z-index: 5; }
+  thead tr { background: rgba(17,24,39,0.95); }
+  th {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--accent); }
+  th .sort-icon { opacity: 0.4; margin-left: 4px; }
+  th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+  tbody tr {
+    border-bottom: 1px solid rgba(36,48,72,0.5);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: rgba(59,130,246,0.05); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 11px 14px; vertical-align: middle; white-space: nowrap; color: var(--text); }
+  td.wrap { white-space: normal; max-width: 200px; }
+  .td-mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+
+  /* BADGES */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-green { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-blue { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+  .badge-orange { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+  .badge-red { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+  .badge-purple { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
+  .badge-gray { background: rgba(100,116,139,0.12); color: #94a3b8; border: 1px solid rgba(100,116,139,0.2); }
+
+  /* AVATAR */
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .student-cell { display: flex; align-items: center; gap: 10px; }
+  .student-info { display: flex; flex-direction: column; }
+  .student-name { font-weight: 600; font-size: 13px; }
+  .student-id { font-size: 11px; color: var(--dim); font-family: 'JetBrains Mono', monospace; }
+
+  /* ROW ACTIONS */
+  .row-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+  tbody tr:hover .row-actions { opacity: 1; }
+  .icon-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .icon-btn.del:hover { background: var(--red); border-color: var(--red); }
+
+  /* MODAL OVERLAY */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+    overflow: hidden;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .modal-close {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: rgba(239,68,68,0.1); color: var(--red); border-color: var(--red); }
+  .modal-body { padding: 28px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 18px 28px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+  .form-input {
+    padding: 9px 13px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .form-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    grid-column: 1 / -1;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success .toast-dot { background: var(--green); }
+  .toast.error .toast-dot { background: var(--red); }
+  .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* VIEW MODAL */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .detail-item { padding: 12px 14px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
+  .detail-item.full { grid-column: 1 / -1; }
+  .detail-key { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--dim); margin-bottom: 5px; font-weight: 600; }
+  .detail-val { font-size: 13px; color: var(--text); font-weight: 500; }
+  .detail-val.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; }
+
+  /* PAGINATION */
+  .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .page-info { font-size: 12px; color: var(--muted); }
+  .page-controls { display: flex; gap: 6px; }
+  .page-btn {
+    padding: 6px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Sora', sans-serif;
+  }
+  .page-btn:hover:not(:disabled) { background: var(--card); color: var(--text); }
+  .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* DISABILITY COLORS */
+  .dis-LD { background: rgba(59,130,246,0.12); color: #60a5fa; }
+  .dis-Locomotor { background: rgba(16,185,129,0.12); color: #34d399; }
+  .dis-SLD { background: rgba(139,92,246,0.12); color: #a78bfa; }
+  .dis-LowVision { background: rgba(245,158,11,0.12); color: #fbbf24; }
+  .dis-ID { background: rgba(236,72,153,0.12); color: #f472b6; }
+  .dis-Speech { background: rgba(6,182,212,0.12); color: #22d3ee; }
+  .dis-Mixed { background: rgba(239,68,68,0.12); color: #f87171; }
+
+  @media (max-width: 768px) {
+    main { padding: 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-text">
+        <h1>CWSN Student Portal</h1>
+        <p>MCPS JJ Shadipur — Code: 2160016</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" onclick="exportToExcel()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Export Excel
+      </button>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add Student
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- TABS -->
+  <div class="tabs-bar" id="tabsBar"></div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" type="text" id="searchInput" placeholder="Search by name, ID, class…" oninput="renderTable()">
+    </div>
+    <select class="filter-select" id="disFilter" onchange="renderTable()">
+      <option value="">All Disabilities</option>
+      <option value="LD">LD</option>
+      <option value="Locomotor">Locomotor</option>
+      <option value="SLD">SLD</option>
+      <option value="Low Vision">Low Vision</option>
+      <option value="ID">ID</option>
+      <option value="Speech">Speech</option>
+      <option value="Loco">Loco+</option>
+    </select>
+    <select class="filter-select" id="udidFilter" onchange="renderTable()">
+      <option value="">UDID Status (All)</option>
+      <option value="Applied">Applied</option>
+      <option value="NO">Not Applied</option>
+    </select>
+    <div class="spacer"></div>
+    <span id="resultCount" style="font-size:12px;color:var(--muted);"></span>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span class="page-info" id="pageInfo"></span>
+      <div class="page-controls" id="pagControls"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="viewModalTitle">Student Details</div>
+        <div class="modal-subtitle" id="viewModalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+    </div>
+    <div class="modal-body" id="viewModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('viewModal')">Close</button>
+      <button class="btn btn-primary" id="editFromView">✏️ Edit Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="editModalTitle">Add New Student</div>
+        <div class="modal-subtitle">Fill in all required fields</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="editForm"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn btn-success" onclick="saveRecord()">💾 Save Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+const RAW = {"Student_Data_All": [{"S. No.": "2", "Student Id": "20220392383", "Student Name": "KHUSNAJ PARVIN", "Identification": "Camp Feb-2023", "Class & Section": "4-A", "Admission Number": "10986", "DOB": "2015-01-01 00:00:00", "Father's Name": "MD. JASIM", "Mother's Name": "RABINA KHATUN", "Address": "B-132 PANDAV NAGAR DELHI", "Bank A/C No.": "110105208699", "Bank Name": "CANARA BANK", "IFSC": "CNRB0002010", "MICR No": "110015066", "Aadhar Card No.": "362229240098", "PFMS Vendor ID": "VADLWD00019179", "Mobile No": "8757864840", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "2023-10-02", "Assessment Camp Date": "21-02-2023", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "3", "Student Id": "20180435628", "Student Name": "KULSUM", "Identification": "Prashastha Apr-2023", "Class & Section": "4-A", "Admission Number": "4501", "DOB": "May 7 2014", "Father's Name": "MOHD. AMAANULLAH", "Mother's Name": "GULNAZ PARVEEN", "Address": "62/269 SHIVBASTI RAMA ROAD", "Bank A/C No.": "5155108001138", "Bank Name": "CANARA BANK", "IFSC": "CNRB0005155", "MICR No": "110015238", "Aadhar Card No.": "392174122388", "PFMS Vendor ID": "VADLWD00023032", "Mobile No": "9891533549", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "18/04/2023", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "4", "Student Id": "20210509844", "Student Name": "DIVYA", "Identification": "Prashastha Apr-2023", "Class & Section": "4-A", "Admission Number": "10866", "DOB": "May 8 2014", "Father's Name": "RAM NIWAS", "Mother's Name": "PREETI", "Address": "H.NO-177, TC, PANDAV NAGAR-110008", "Bank A/C No.": "0317104000200820", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "994835778730", "PFMS Vendor ID": "VADLWD00023033", "Mobile No": "7291946549", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "18/04/2023", "Assessment Camp Date": "2024-03-07", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "5", "Student Id": "20220121572", "Student Name": "DARSHIKA", "Identification": "2022", "Class & Section": "2-A", "Admission Number": "10936", "DOB": "Aug 30 2016", "Father's Name": "BAJRANG BALI PANDAY", "Mother's Name": "RINKI PANDAY", "Address": "B 448 PANDAV NAGAR", "Bank A/C No.": "0317104000201643", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "715497745305", "PFMS Vendor ID": "VADLWD00016666", "Mobile No": "7232962896", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1264929"}, {"S. No.": "6", "Student Id": "20220136392", "Student Name": "VARTIKA SHARMA", "Identification": "2022", "Class & Section": "2-A", "Admission Number": "10939", "DOB": "Aug 2 2016", "Father's Name": "PRAVEEN SHARMA", "Mother's Name": "UMA SHARMA", "Address": "A 98 JJ COLONY PANDAV NAGAR", "Bank A/C No.": "0317104000202602", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "717147458994", "PFMS Vendor ID": "VADLWD00016667", "Mobile No": "8416811991", "Availability Of Certificate": "NO", "Types Of Disability": "Low Vision", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1265514"}, {"S. No.": "7", "Student Id": "20220130106", "Student Name": "JANVI", "Identification": "Camp Feb-2023", "Class & Section": "5-A", "Admission Number": "10938", "DOB": "Dec 29 2013", "Father's Name": "SONU CHANDRAPAL GAUTAM", "Mother's Name": "SONI", "Address": "A289 SANGAM COLONY PANDAV NAGAR", "Bank A/C No.": "06231000905032", "Bank Name": "Punjab And Sind bank", "IFSC": "PSIB0000623", "MICR No": "110023049", "Aadhar Card No.": "893263742219", "PFMS Vendor ID": "VADLWD00018427", "Mobile No": "9711575536", "Availability Of Certificate": "NO", "Types Of Disability": "Loco+ID", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "2023-02-02", "Assessment Camp Date": "2023-09-02", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1273617"}, {"S. No.": "8", "Student Id": "20210456185", "Student Name": "MAHI", "Identification": "2022", "Class & Section": "5-A", "Admission Number": "10867", "DOB": "Oct 10 2013", "Father's Name": "SANDEEP", "Mother's Name": "ANURADHA", "Address": "W39/28 SANGAM COLONY BLOCK A VISHNU MATA MANDI NAIRAINA VIHAR PHASE 2", "Bank A/C No.": "0317104000200318", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "893905051181", "PFMS Vendor ID": "VADLWD00016665", "Mobile No": "7838490753", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1272497"}, {"S. No.": "9", "Student Id": "20190462360", "Student Name": "ASHITA", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "10657", "DOB": "Nov 22 2013", "Father's Name": "MANOHAR LAL", "Mother's Name": "LATE MEENU BALA", "Address": "A 555 PANDAV NAGAR", "Bank A/C No.": "06551000071604", "Bank Name": "Punjab And Sind bank", "IFSC": "PSIB0000655", "MICR No": "110023068", "Aadhar Card No.": "999858684830", "PFMS Vendor ID": "", "Mobile No": "7827232386", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "20/04/2023", "Assessment Camp Date": "", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1272007"}, {"S. No.": "10", "Student Id": "20210130810", "Student Name": "UJBEDA KHATOON", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "10832", "DOB": "Jan 1 2014", "Father's Name": "ALA UADDIN KUJRA", "Mother's Name": "GULSHAN KHATUN", "Address": "TC40 GAI.NO.3 PANDAV NAGAR", "Bank A/C No.": "0317104000200189", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "214449330535", "PFMS Vendor ID": "", "Mobile No": "8076552041", "Availability Of Certificate": "NO", "Types Of Disability": "Loco+LD", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "20/04/2023", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "11", "Student Id": "20190462366", "Student Name": "NIKHAT PARVEEN", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "10714", "DOB": "Oct 29 2013", "Father's Name": "MD IMTIYAZ", "Mother's Name": "NOORJAHAN KHATOON", "Address": "A 111 BLOCK A SANGAM COLONY", "Bank A/C No.": "0317104000195584", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "384548265589", "PFMS Vendor ID": "", "Mobile No": "8810633534", "Availability Of Certificate": "NO", "Types Of Disability": "Loco+LV+LD", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "20/04/2023", "Assessment Camp Date": "", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1265184"}, {"S. No.": "12", "Student Id": "20210047347", "Student Name": "APRAJITA KUMARI", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "10806", "DOB": "Jun 25 2013", "Father's Name": "MANOJ KUMAR", "Mother's Name": "ANJANI DEVI", "Address": "B139 PANDAV NAGAR", "Bank A/C No.": "40271607085", "Bank Name": "STATE BANK OF INDIA", "IFSC": "SBIN0017025", "MICR No": "110002519", "Aadhar Card No.": "244582493391", "PFMS Vendor ID": "", "Mobile No": "9311664666", "Availability Of Certificate": "NO", "Types Of Disability": "Speech&L", "UDID Availability": "NO", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Hospital Visit Date": "", "Date Of Registration": "", "Assessment Date": "20/04/2023", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}], "2024-25_CWSN": [{"S. No.": "1", "Student Id": "20220392383", "Student Name": "KHUSNAJ PARVIN", "Identification": "Camp Feb-2023", "Class & Section": "5-A", "Admission Number": "10986", "DOB": "2015-01-01", "Father's Name": "MD. JASIM", "Mother's Name": "RABINA KHATUN", "Address": "B-132 PANDAV NAGAR DELHI", "Bank A/C No.": "110105208699", "Bank Name": "CANARA BANK", "IFSC": "CNRB0002010", "MICR No": "110015066", "Aadhar Card No.": "362229240098", "PFMS Vendor ID": "VADLWD00019179", "Mobile No": "8757864840", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "NO", "Date Of Registration": "", "Assessment Date": "2023-10-02", "Assessment Camp Date": "21-02-2023", "UDID Status": "Applied", "UDID Enrollment Number": "07850000024090011505"}, {"S. No.": "2", "Student Id": "20180435628", "Student Name": "KULSUM", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "4501", "DOB": "May 7 2014", "Father's Name": "MOHD. AMAANULLAH", "Mother's Name": "GULNAZ PARVEEN", "Address": "62/269 SHIVBASTI RAMA ROAD", "Bank A/C No.": "5155108001138", "Bank Name": "CANARA BANK", "IFSC": "CNRB0005155", "MICR No": "110015238", "Aadhar Card No.": "392174122388", "PFMS Vendor ID": "VADLWD00023032", "Mobile No": "9891533549", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "18/04/2023", "Assessment Camp Date": "", "UDID Status": "Applied", "UDID Enrollment Number": "07850000024070006186"}, {"S. No.": "3", "Student Id": "20210509844", "Student Name": "DIVYA", "Identification": "Prashastha Apr-2023", "Class & Section": "5-A", "Admission Number": "10866", "DOB": "May 8 2014", "Father's Name": "RAM NIWAS", "Mother's Name": "PREETI", "Address": "H.NO-177, TC, PANDAV NAGAR-110008", "Bank A/C No.": "0317104000200820", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "994835778730", "PFMS Vendor ID": "VADLWD00023033", "Mobile No": "7291946549", "Availability Of Certificate": "NO", "Types Of Disability": "LD", "UDID Availability": "NO", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "18/04/2023", "Assessment Camp Date": "2024-03-07", "UDID Status": "Applied", "UDID Enrollment Number": "07850000024070007524"}, {"S. No.": "4", "Student Id": "20220121572", "Student Name": "DARSHIKA", "Identification": "2022", "Class & Section": "3-A", "Admission Number": "10936", "DOB": "Aug 30 2016", "Father's Name": "BAJRANG BALI PANDAY", "Mother's Name": "RINKI PANDAY", "Address": "B 448 PANDAV NAGAR", "Bank A/C No.": "0317104000201643", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "715497745305", "PFMS Vendor ID": "VADLWD00025535", "Mobile No": "7232962896", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "NO", "Hospital Visit Date": "Visited", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1264929"}, {"S. No.": "5", "Student Id": "20220136392", "Student Name": "VARTIKA SHARMA", "Identification": "2022", "Class & Section": "3-A", "Admission Number": "10939", "DOB": "Aug 2 2016", "Father's Name": "PRAVEEN SHARMA", "Mother's Name": "UMA SHARMA", "Address": "A 98 JJ COLONY PANDAV NAGAR", "Bank A/C No.": "0317104000202602", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "717147458994", "PFMS Vendor ID": "VADLWD00025985", "Mobile No": "8416811991", "Availability Of Certificate": "NO", "Types Of Disability": "Low Vision", "UDID Availability": "NO", "Hospital Visit Date": "Visited", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1265514"}], "2025-26_CWSN": [{"S. No.": "1", "Student Id": "20220121572", "Student Name": "DARSHIKA", "Identification": "2022", "Class & Section": "4-A", "Admission Number": "10936", "DOB": "Aug 30 2016", "Father's Name": "BAJRANG BALI PANDAY", "Mother's Name": "RINKI PANDAY", "Address": "B 448 PANDAV NAGAR", "Bank A/C No.": "0317104000201643", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "715497745305", "PFMS Vendor ID": "VADLWD00025535", "Mobile No": "7232962896", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "NO", "Hospital Visit Date": "Visited", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1264929"}, {"S. No.": "2", "Student Id": "20220136392", "Student Name": "VARTIKA SHARMA", "Identification": "2022", "Class & Section": "4-A", "Admission Number": "10939", "DOB": "Aug 2 2016", "Father's Name": "PRAVEEN SHARMA", "Mother's Name": "UMA SHARMA", "Address": "A 98 JJ COLONY PANDAV NAGAR", "Bank A/C No.": "0317104000202602", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "110259036", "Aadhar Card No.": "717147458994", "PFMS Vendor ID": "VADLWD00025985", "Mobile No": "8416811991", "Availability Of Certificate": "NO", "Types Of Disability": "Low Vision", "UDID Availability": "NO", "Hospital Visit Date": "Visited", "% Of Disability": "", "If Student Registered on UDID Portal": "Yes", "Date Of Registration": "", "Assessment Date": "2022-07-07", "Assessment Camp Date": "2023-08-24", "UDID Status": "Applied", "UDID Enrollment Number": "0707/00000/2308/1265514"}, {"S. No.": "3", "Student Id": "20230041423", "Student Name": "NEMAT", "Identification": "2025", "Class & Section": "2-A", "Admission Number": "11025", "DOB": "Apr 12 2018", "Father's Name": "MOHD. MUNNA", "Mother's Name": "REENA", "Address": "B-397 Pandav Nagar", "Bank A/C No.": "010037329877", "Bank Name": "POST OFFICE SAVING ACCOUNT", "IFSC": "IPOS0000DOP", "MICR No": "", "Aadhar Card No.": "965949511758", "PFMS Vendor ID": "", "Mobile No": "9667456298", "Availability Of Certificate": "NO", "Types Of Disability": "SLD", "UDID Availability": "NO", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "", "Date Of Registration": "", "Assessment Date": "18-08-2025 PRASHAST", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "4", "Student Id": "20230257684", "Student Name": "NABEESA KHATOON", "Identification": "2025", "Class & Section": "2-A", "Admission Number": "11080", "DOB": "Aug 23 2018", "Father's Name": "MD.DULARE RAIN", "Mother's Name": "KHUSHBU", "Address": "SHOP NO.29 1ST FLOOR PANDAV NAGAR", "Bank A/C No.": "0317104000208116", "Bank Name": "IDBI BANK LTD", "IFSC": "IBKL0000317", "MICR No": "", "Aadhar Card No.": "978027881344", "PFMS Vendor ID": "", "Mobile No": "6203462426", "Availability Of Certificate": "No", "Types Of Disability": "SLD", "UDID Availability": "No", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "", "Date Of Registration": "", "Assessment Date": "18-08-2025 PRASHAST", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "5", "Student Id": "20240102710", "Student Name": "FIZA", "Identification": "2025", "Class & Section": "2-A", "Admission Number": "11154", "DOB": "Nov 30 2018", "Father's Name": "GULJAR", "Mother's Name": "BANO", "Address": "108 Pandav Nagar", "Bank A/C No.": "010039804456", "Bank Name": "POST OFFICE SAVING ACCOUNT", "IFSC": "IPOS0000DOP", "MICR No": "", "Aadhar Card No.": "772985571457", "PFMS Vendor ID": "", "Mobile No": "9582837611", "Availability Of Certificate": "No", "Types Of Disability": "SLD", "UDID Availability": "No", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "", "Date Of Registration": "", "Assessment Date": "18-08-2025 PRASHAST", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "6", "Student Id": "20230412675", "Student Name": "ANJALI PRIYA", "Identification": "2025", "Class & Section": "3-A", "Admission Number": "11122", "DOB": "Mar 23 2018", "Father's Name": "JAY BABU PRASAD", "Mother's Name": "POOJA KUMARI", "Address": "H. NO. -370,A-BLOCK,SANGAM COLONY", "Bank A/C No.": "110155507965", "Bank Name": "CANARA BANK", "IFSC": "CNRB0019074", "MICR No": "110015410", "Aadhar Card No.": "269225731381", "PFMS Vendor ID": "", "Mobile No": "8130269543", "Availability Of Certificate": "NO", "Types Of Disability": "ID", "UDID Availability": "NO", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "", "Date Of Registration": "", "Assessment Date": "18-08-2025 PRASHAST", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}, {"S. No.": "7", "Student Id": "20250340608", "Student Name": "LAKSHITA", "Identification": "2025", "Class & Section": "5-A", "Admission Number": "11255", "DOB": "Nov 17 2013", "Father's Name": "JITENDER", "Mother's Name": "BHAWNA", "Address": "", "Bank A/C No.": "", "Bank Name": "", "IFSC": "", "MICR No": "", "Aadhar Card No.": "", "PFMS Vendor ID": "", "Mobile No": "9990797054", "Availability Of Certificate": "NO", "Types Of Disability": "Locomotor", "UDID Availability": "No", "Hospital Visit Date": "", "% Of Disability": "", "If Student Registered on UDID Portal": "No", "Date Of Registration": "", "Assessment Date": "26-11-2025 Prashast", "Assessment Camp Date": "", "UDID Status": "", "UDID Enrollment Number": ""}]};
+
+// ============================================================
+//  STATE
+// ============================================================
+const TABS = ['Student_Data_All', '2024-25_CWSN', '2025-26_CWSN'];
+const TAB_LABELS = { 'Student_Data_All': 'All Students', '2024-25_CWSN': '2024–25', '2025-26_CWSN': '2025–26' };
+let data = JSON.parse(JSON.stringify(RAW));
+let currentTab = TABS[0];
+let editingId = null;
+let editingSheet = null;
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let sortCol = null, sortDir = 1;
+let viewIdx = null;
+
+const COLUMNS = [
+  { key: 'Student Name', label: 'Student' },
+  { key: 'Class & Section', label: 'Class' },
+  { key: 'Types Of Disability', label: 'Disability' },
+  { key: 'UDID Status', label: 'UDID Status' },
+  { key: 'Mobile No', label: 'Mobile' },
+  { key: 'Bank Name', label: 'Bank' },
+  { key: 'Assessment Date', label: 'Assess. Date' },
+  { key: 'actions', label: 'Actions' },
+];
+
+const ALL_FIELDS = [
+  { key: 'Student Name', label: 'Student Name', section: '🎓 Basic Info' },
+  { key: 'Student Id', label: 'Student ID', section: '🎓 Basic Info' },
+  { key: 'Admission Number', label: 'Admission No.', section: '🎓 Basic Info' },
+  { key: 'DOB', label: 'Date of Birth', section: '🎓 Basic Info' },
+  { key: 'Class & Section', label: 'Class & Section', section: '🎓 Basic Info' },
+  { key: 'Identification', label: 'Identification', section: '🎓 Basic Info' },
+  { key: "Father's Name", label: "Father's Name", section: '👨‍👩‍👧 Family' },
+  { key: "Mother's Name", label: "Mother's Name", section: '👨‍👩‍👧 Family' },
+  { key: 'Address', label: 'Address', section: '👨‍👩‍👧 Family', full: true },
+  { key: 'Mobile No', label: 'Mobile No.', section: '👨‍👩‍👧 Family' },
+  { key: 'Types Of Disability', label: 'Type of Disability', section: '♿ Disability Info' },
+  { key: '% Of Disability', label: '% of Disability', section: '♿ Disability Info' },
+  { key: 'Availability Of Certificate', label: 'Certificate Available', section: '♿ Disability Info' },
+  { key: 'Hospital Visit Date', label: 'Hospital Visit Date', section: '♿ Disability Info' },
+  { key: 'UDID Availability', label: 'UDID Available', section: '🪪 UDID' },
+  { key: 'UDID Status', label: 'UDID Status', section: '🪪 UDID' },
+  { key: 'UDID Enrollment Number', label: 'UDID Enrollment No.', section: '🪪 UDID', full: true },
+  { key: 'If Student Registered on UDID Portal', label: 'Registered on UDID Portal', section: '🪪 UDID' },
+  { key: 'Date Of Registration', label: 'Date of Registration', section: '🪪 UDID' },
+  { key: 'Assessment Date', label: 'Assessment Date', section: '📋 Assessment' },
+  { key: 'Assessment Camp Date', label: 'Assessment Camp Date', section: '📋 Assessment' },
+  { key: 'Aadhar Card No.', label: 'Aadhar No.', section: '🏦 Banking' },
+  { key: 'Bank A/C No.', label: 'Bank A/C No.', section: '🏦 Banking' },
+  { key: 'Bank Name', label: 'Bank Name', section: '🏦 Banking' },
+  { key: 'IFSC', label: 'IFSC Code', section: '🏦 Banking' },
+  { key: 'MICR No', label: 'MICR No.', section: '🏦 Banking' },
+  { key: 'PFMS Vendor ID', label: 'PFMS Vendor ID', section: '🏦 Banking' },
+];
+
+// ============================================================
+//  HELPERS
+// ============================================================
+const colors = ['#3b82f6','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316','#6366f1'];
+function avatarColor(name) { let h = 0; for (let c of (name||'')) h = (h*31 + c.charCodeAt(0)) % colors.length; return colors[h]; }
+function initials(name) { return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+function disabilityBadge(dis) {
+  if (!dis) return `<span class="badge badge-gray">—</span>`;
+  const d = dis.toLowerCase();
+  if (d.includes('+')) return `<span class="badge badge-red" style="border-color:rgba(239,68,68,.3)">${dis}</span>`;
+  if (d==='ld') return `<span class="badge badge-blue">${dis}</span>`;
+  if (d.includes('locomotor')) return `<span class="badge badge-green">${dis}</span>`;
+  if (d==='sld') return `<span class="badge badge-purple">${dis}</span>`;
+  if (d.includes('low vision')) return `<span class="badge badge-orange">${dis}</span>`;
+  if (d==='id') return `<span class="badge" style="background:rgba(236,72,153,.12);color:#f472b6;border:1px solid rgba(236,72,153,.2)">${dis}</span>`;
+  if (d.includes('speech')) return `<span class="badge" style="background:rgba(6,182,212,.12);color:#22d3ee;border:1px solid rgba(6,182,212,.2)">${dis}</span>`;
+  return `<span class="badge badge-gray">${dis}</span>`;
+}
+
+function udidBadge(status) {
+  if (!status || status==='NO' || status==='No') return `<span class="badge badge-gray">—</span>`;
+  if (status.toLowerCase()==='applied') return `<span class="badge badge-orange">Applied</span>`;
+  return `<span class="badge badge-green">${status}</span>`;
+}
+
+// ============================================================
+//  STATS
+// ============================================================
+function renderStats() {
+  const all = data['Student_Data_All'];
+  const applied = all.filter(r => (r['UDID Status']||'').toLowerCase()==='applied').length;
+  const disTypes = [...new Set(all.map(r=>r['Types Of Disability']).filter(Boolean))].length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">Total Students</div><div class="stat-value blue">${all.length}</div><div class="stat-sub">All records</div></div>
+    <div class="stat-card purple"><div class="stat-label">UDID Applied</div><div class="stat-value purple">${applied}</div><div class="stat-sub">of ${all.length} students</div></div>
+    <div class="stat-card green"><div class="stat-label">2024-25 Session</div><div class="stat-value green">${data['2024-25_CWSN'].length}</div><div class="stat-sub">active this year</div></div>
+    <div class="stat-card orange"><div class="stat-label">2025-26 Session</div><div class="stat-value orange">${data['2025-26_CWSN'].length}</div><div class="stat-sub">enrolled</div></div>
+  `;
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+function renderTabs() {
+  document.getElementById('tabsBar').innerHTML = TABS.map(t =>
+    `<button class="tab-btn ${t===currentTab?'active':''}" onclick="switchTab('${t}')">${TAB_LABELS[t]} <span style="opacity:.6;font-size:11px;">(${data[t].length})</span></button>`
+  ).join('');
+}
+function switchTab(t) { currentTab = t; currentPage = 1; sortCol = null; renderTabs(); renderTable(); }
+
+// ============================================================
+//  TABLE
+// ============================================================
+function filteredData() {
+  let rows = [...data[currentTab]];
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const dis = document.getElementById('disFilter').value.toLowerCase();
+  const udid = document.getElementById('udidFilter').value.toLowerCase();
+  if (q) rows = rows.filter(r =>
+    (r['Student Name']||'').toLowerCase().includes(q) ||
+    (r['Student Id']||'').toLowerCase().includes(q) ||
+    (r['Class & Section']||'').toLowerCase().includes(q) ||
+    (r['Mobile No']||'').includes(q)
+  );
+  if (dis) rows = rows.filter(r => (r['Types Of Disability']||'').toLowerCase().includes(dis));
+  if (udid) rows = rows.filter(r => {
+    const s = (r['UDID Status']||'').toLowerCase();
+    if (udid==='applied') return s==='applied';
+    if (udid==='no') return !s || s==='no';
+    return true;
+  });
+  if (sortCol) rows.sort((a,b) => {
+    const va = (a[sortCol]||'').toString().toLowerCase();
+    const vb = (b[sortCol]||'').toString().toLowerCase();
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+  return rows;
+}
+
+function renderTable() {
+  const rows = filteredData();
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  currentPage = Math.min(currentPage, totalPages);
+  const pageRows = rows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+  document.getElementById('resultCount').textContent = `${total} record${total!==1?'s':''} found`;
+
+  // Head
+  document.getElementById('tableHead').innerHTML = '<tr>' + COLUMNS.map(c => {
+    if (c.key==='actions') return `<th style="text-align:right">Actions</th>`;
+    const sorted = sortCol===c.key;
+    return `<th class="${sorted?'sorted':''}" onclick="doSort('${c.key}')">${c.label} <span class="sort-icon">${sorted?(sortDir===1?'↑':'↓'):'↕'}</span></th>`;
+  }).join('') + '</tr>';
+
+  // Body
+  if (pageRows.length===0) {
+    document.getElementById('tableBody').innerHTML = `<tr><td colspan="${COLUMNS.length}"><div class="empty-state"><div class="empty-state-icon">🔍</div><h3>No records found</h3><p>Try adjusting your search or filters</p></div></td></tr>`;
+  } else {
+    document.getElementById('tableBody').innerHTML = pageRows.map((r, i) => {
+      const globalIdx = data[currentTab].indexOf(r);
+      const col = avatarColor(r['Student Name']);
+      return `<tr onclick="openView(${globalIdx})">
+        <td><div class="student-cell">
+          <div class="avatar" style="background:${col}">${initials(r['Student Name'])}</div>
+          <div class="student-info">
+            <span class="student-name">${r['Student Name']||'—'}</span>
+            <span class="student-id">${r['Student Id']||''}</span>
+          </div>
+        </div></td>
+        <td><span class="badge badge-blue">${r['Class & Section']||'—'}</span></td>
+        <td>${disabilityBadge(r['Types Of Disability'])}</td>
+        <td>${udidBadge(r['UDID Status'])}</td>
+        <td class="td-mono">${r['Mobile No']||'—'}</td>
+        <td>${r['Bank Name']||'—'}</td>
+        <td class="td-mono" style="font-size:12px">${r['Assessment Date']||'—'}</td>
+        <td style="text-align:right"><div class="row-actions" onclick="event.stopPropagation()">
+          <div class="icon-btn" title="View" onclick="openView(${globalIdx})">👁</div>
+          <div class="icon-btn" title="Edit" onclick="openEdit(${globalIdx})">✏️</div>
+          <div class="icon-btn del" title="Delete" onclick="deleteRow(${globalIdx})">🗑</div>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination
+  document.getElementById('pageInfo').textContent = total ? `Page ${currentPage} of ${totalPages} · ${total} records` : '';
+  let pbtns = '';
+  pbtns += `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹ Prev</button>`;
+  for (let p = Math.max(1,currentPage-2); p <= Math.min(totalPages,currentPage+2); p++) {
+    pbtns += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  pbtns += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>Next ›</button>`;
+  document.getElementById('pagControls').innerHTML = pbtns;
+}
+
+function goPage(p) { currentPage = p; renderTable(); }
+function doSort(col) { if (sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; } renderTable(); }
+
+// ============================================================
+//  VIEW MODAL
+// ============================================================
+function openView(idx) {
+  viewIdx = idx;
+  const r = data[currentTab][idx];
+  document.getElementById('viewModalTitle').textContent = r['Student Name'] || 'Student Details';
+  document.getElementById('viewModalSub').textContent = `ID: ${r['Student Id']} · ${currentTab}`;
+
+  const sections = [...new Set(ALL_FIELDS.map(f=>f.section))];
+  let html = '';
+  for (const sec of sections) {
+    const fields = ALL_FIELDS.filter(f=>f.section===sec);
+    html += `<div style="margin-bottom:20px"><div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">${sec}</div><div class="detail-grid">`;
+    for (const f of fields) {
+      const v = r[f.key] || '—';
+      html += `<div class="detail-item${f.full?' full':''}"><div class="detail-key">${f.label}</div><div class="detail-val ${['Student Id','Aadhar Card No.','Bank A/C No.','IFSC','MICR No','PFMS Vendor ID','UDID Enrollment Number','Mobile No'].includes(f.key)?'mono':''}">${v}</div></div>`;
+    }
+    html += '</div></div>';
+  }
+  document.getElementById('viewModalBody').innerHTML = html;
+  document.getElementById('editFromView').onclick = () => { closeModal('viewModal'); openEdit(idx); };
+  document.getElementById('viewModal').classList.add('open');
+}
+
+// ============================================================
+//  EDIT / ADD MODAL
+// ============================================================
+function openEdit(idx) {
+  editingId = idx;
+  editingSheet = currentTab;
+  const r = data[currentTab][idx];
+  document.getElementById('editModalTitle').textContent = `Edit — ${r['Student Name']}`;
+  buildForm(r);
+  document.getElementById('editModal').classList.add('open');
+}
+
+function openAddModal() {
+  editingId = null;
+  editingSheet = currentTab;
+  document.getElementById('editModalTitle').textContent = 'Add New Student';
+  buildForm({});
+  document.getElementById('editModal').classList.add('open');
+}
+
+function buildForm(r) {
+  const sections = [...new Set(ALL_FIELDS.map(f=>f.section))];
+  let html = '';
+  for (const sec of sections) {
+    const fields = ALL_FIELDS.filter(f=>f.section===sec);
+    html += `<div class="form-section-title">${sec}</div>`;
+    for (const f of fields) {
+      html += `<div class="form-group${f.full?' full':''}">
+        <label class="form-label">${f.label}</label>
+        <input class="form-input" id="field_${f.key.replace(/[^a-zA-Z0-9]/g,'_')}" value="${(r[f.key]||'').replace(/"/g,'&quot;')}" placeholder="${f.label}">
+      </div>`;
+    }
+  }
+  document.getElementById('editForm').innerHTML = html;
+}
+
+function saveRecord() {
+  const rec = {};
+  for (const f of ALL_FIELDS) {
+    const el = document.getElementById('field_' + f.key.replace(/[^a-zA-Z0-9]/g,'_'));
+    if (el) rec[f.key] = el.value.trim();
+  }
+  if (!rec['Student Name']) { showToast('Student Name is required', 'error'); return; }
+
+  if (editingId !== null) {
+    data[editingSheet][editingId] = { ...data[editingSheet][editingId], ...rec };
+    showToast(`✅ Updated ${rec['Student Name']}`, 'success');
+  } else {
+    rec['S. No.'] = String(data[currentTab].length + 1);
+    data[currentTab].push(rec);
+    showToast(`✅ Added ${rec['Student Name']}`, 'success');
+  }
+  closeModal('editModal');
+  renderStats();
+  renderTabs();
+  renderTable();
+}
+
+function deleteRow(idx) {
+  const name = data[currentTab][idx]['Student Name'];
+  if (!confirm(`Delete record for ${name}?`)) return;
+  data[currentTab].splice(idx, 1);
+  showToast(`🗑 Deleted ${name}`, 'error');
+  renderStats(); renderTabs(); renderTable();
+}
+
+// ============================================================
+//  EXPORT
+// ============================================================
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  for (const tab of TABS) {
+    const rows = data[tab];
+    if (!rows.length) continue;
+    const keys = ALL_FIELDS.map(f => f.key);
+    const labels = ALL_FIELDS.map(f => f.label);
+    const wsData = [
+      ['CWSN Details - MCPS JJ Shadipur - 1 2160016'],
+      [],
+      labels,
+      ...rows.map(r => keys.map(k => r[k] || ''))
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = labels.map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, tab);
+  }
+  XLSX.writeFile(wb, 'CWSN_Details_Updated.xlsx');
+  showToast('📥 Excel file downloaded!', 'success');
+}
+
+// ============================================================
+//  MODAL / TOAST
+// ============================================================
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target===el) el.classList.remove('open'); }));
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+renderStats();
+renderTabs();
+renderTable();
+</script>
+</body>
+</html>
