@@ -518,6 +518,93 @@
     .form-grid { grid-template-columns: 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
   }
+
+  /* UPLOAD MODAL */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 40px 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(59,130,246,0.02);
+    margin-bottom: 20px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.06);
+  }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-sub { font-size: 12px; color: var(--muted); }
+  .upload-hint { font-size: 11px; color: var(--dim); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  .sheet-preview { margin-top: 16px; }
+  .sheet-preview-title { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .sheet-list { display: flex; flex-direction: column; gap: 8px; }
+  .sheet-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .sheet-item-left { display: flex; align-items: center; gap: 10px; }
+  .sheet-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .sheet-dot.new { background: var(--green); }
+  .sheet-dot.update { background: var(--orange); }
+  .sheet-name { font-weight: 600; }
+  .sheet-count { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .sheet-status { font-size: 11px; color: var(--green); font-weight: 600; }
+  .sheet-status.new-tab { color: var(--accent); }
+  .sheet-status.updating { color: var(--orange); }
+
+  .import-mode-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .import-mode-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .import-mode-btn.active {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.1);
+    color: var(--accent);
+  }
+
+  .btn-accent2 {
+    background: linear-gradient(135deg, var(--accent2), #0891b2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(6,182,212,0.3);
+  }
+  .btn-accent2:hover { transform: translateY(-1px); }
+
+  .progress-bar-wrap {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
 </style>
 </head>
 <body>
@@ -533,6 +620,14 @@
       </div>
     </div>
     <div class="header-right">
+      <button class="btn btn-ghost" onclick="downloadTemplate()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="18"/><line x1="15" y1="15" x2="12" y2="18"/></svg>
+        Template
+      </button>
+      <button class="btn btn-accent2" onclick="openUploadModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Excel
+      </button>
       <button class="btn btn-ghost" onclick="exportToExcel()">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         Export Excel
@@ -629,6 +724,65 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
       <button class="btn btn-success" onclick="saveRecord()">💾 Save Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📥 Import Excel File</div>
+        <div class="modal-subtitle">Upload sessions from an Excel workbook — each sheet = one session tab</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('uploadModal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Mode selector -->
+      <div class="import-mode-row">
+        <button class="import-mode-btn active" id="modeReplace" onclick="setImportMode('replace')">
+          🔄 Replace Tab Data<br><span style="font-size:10px;opacity:.7">Overwrite matching tabs</span>
+        </button>
+        <button class="import-mode-btn" id="modeMerge" onclick="setImportMode('merge')">
+          🔀 Merge by Student ID<br><span style="font-size:10px;opacity:.7">Update existing, add new</span>
+        </button>
+        <button class="import-mode-btn" id="modeAdd" onclick="setImportMode('addtabs')">
+          ➕ Add New Tabs Only<br><span style="font-size:10px;opacity:.7">Only import new sheets</span>
+        </button>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Drop your Excel file here</div>
+        <div class="upload-sub">or click to browse</div>
+        <div class="upload-hint">Supports .xlsx · Each worksheet = one session tab</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(event)">
+      </div>
+
+      <!-- Preview area -->
+      <div id="uploadPreview" style="display:none">
+        <div class="sheet-preview">
+          <div class="sheet-preview-title">📋 Detected Sheets</div>
+          <div class="sheet-list" id="sheetList"></div>
+        </div>
+        <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="uploadSummary" style="font-size:12px;color:var(--muted);margin-top:10px;display:none"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('uploadModal')">Cancel</button>
+      <button class="btn btn-ghost" onclick="downloadTemplate()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Download Template
+      </button>
+      <button class="btn btn-success" id="doImportBtn" onclick="doImport()" style="display:none">✅ Import Data</button>
     </div>
   </div>
 </div>
@@ -966,6 +1120,268 @@ function showToast(msg, type='success') {
   document.getElementById('toastMsg').textContent = msg;
   t.className = `toast ${type} show`;
   setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ============================================================
+//  EXCEL UPLOAD / IMPORT
+// ============================================================
+let importMode = 'replace';
+let parsedUploadData = null; // { sheetName: [rows...] }
+
+function setImportMode(mode) {
+  importMode = mode;
+  ['replace','merge','addtabs'].forEach(m => {
+    document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1)).classList.toggle('active', m===mode);
+  });
+  if (parsedUploadData) renderSheetPreview(parsedUploadData);
+}
+
+function openUploadModal() {
+  parsedUploadData = null;
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('doImportBtn').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  document.getElementById('uploadModal').classList.add('open');
+}
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag-over'); }
+function handleDragLeave(e) { document.getElementById('uploadZone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processUploadedFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processUploadedFile(file);
+}
+
+// Column alias map — maps various Excel header spellings → canonical field keys
+const COL_ALIASES = {
+  's. no.': 'S. No.', 's.no.': 'S. No.', 'sno': 'S. No.', 'serial': 'S. No.',
+  'student id': 'Student Id', 'studentid': 'Student Id',
+  'student name': 'Student Name', 'name': 'Student Name',
+  'identification': 'Identification',
+  'class & section': 'Class & Section', 'class': 'Class & Section', 'section': 'Class & Section',
+  'admission number': 'Admission Number', 'admission no': 'Admission Number', 'admno': 'Admission Number',
+  'dob': 'DOB', 'date of birth': 'DOB',
+  "father's name": "Father's Name", "father's\nname": "Father's Name", "fathers name": "Father's Name",
+  "mother's name": "Mother's Name", "mothers name": "Mother's Name",
+  'address': 'Address',
+  'bank a/c no.': 'Bank A/C No.', 'bank a/c no': 'Bank A/C No.', 'account no': 'Bank A/C No.', 'bank account': 'Bank A/C No.',
+  'bank name': 'Bank Name',
+  'ifsc': 'IFSC', 'ifsc code': 'IFSC',
+  'micr no': 'MICR No', 'micr': 'MICR No',
+  'aadhar card no.': 'Aadhar Card No.', 'aadhar no': 'Aadhar Card No.', 'aadhaar': 'Aadhar Card No.',
+  'pfms vendor id': 'PFMS Vendor ID', 'pfms': 'PFMS Vendor ID',
+  'mobile no': 'Mobile No', 'mobile': 'Mobile No', 'phone': 'Mobile No',
+  'availability of certificate': 'Availability Of Certificate', 'certificate': 'Availability Of Certificate',
+  'types of disability': 'Types Of Disability', 'disability': 'Types Of Disability', 'type of disability': 'Types Of Disability',
+  'udid availability': 'UDID Availability',
+  'hospital visit date': 'Hospital Visit Date',
+  '% of disability': '% Of Disability', 'disability %': '% Of Disability',
+  'if student registered on udid portal': 'If Student Registered on UDID Portal', 'udid portal': 'If Student Registered on UDID Portal',
+  'date of registration': 'Date Of Registration',
+  'assessment  date': 'Assessment Date', 'assessment date': 'Assessment Date',
+  'assessment  camp date': 'Assessment Camp Date', 'assessment camp date': 'Assessment Camp Date',
+  'udid status': 'UDID Status',
+  'udid enrollment number': 'UDID Enrollment Number', 'udid no': 'UDID Enrollment Number',
+};
+
+function normalizeHeader(h) {
+  const clean = String(h||'').trim().toLowerCase().replace(/\s+/g,' ');
+  return COL_ALIASES[clean] || h;
+}
+
+function processUploadedFile(file) {
+  if (!file.name.match(/\.xlsx?$/i)) {
+    showToast('⚠️ Please upload an .xlsx or .xls file', 'error'); return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: false });
+      const result = {};
+
+      wb.SheetNames.forEach(sheetName => {
+        const ws = wb.Sheets[sheetName];
+        const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        // Find the header row (look for 'Student Name' or 'Student Id' in first 6 rows)
+        let headerRow = -1;
+        for (let i = 0; i < Math.min(6, raw.length); i++) {
+          const rowStr = raw[i].map(c => String(c||'').toLowerCase()).join(' ');
+          if (rowStr.includes('student') && (rowStr.includes('name') || rowStr.includes('id'))) {
+            headerRow = i; break;
+          }
+        }
+        if (headerRow === -1) return; // skip sheets with no recognizable header
+
+        const headers = raw[headerRow].map(h => normalizeHeader(h));
+        const rows = [];
+        for (let i = headerRow + 1; i < raw.length; i++) {
+          const row = raw[i];
+          if (!row || row.every(c => c === '' || c === null || c === undefined)) continue;
+          const obj = {};
+          headers.forEach((h, idx) => { obj[h] = String(row[idx] ?? '').trim(); });
+          // Must have at least a student name or ID
+          if (!obj['Student Name'] && !obj['Student Id']) continue;
+          rows.push(obj);
+        }
+        if (rows.length > 0) result[sheetName] = rows;
+      });
+
+      if (Object.keys(result).length === 0) {
+        showToast('⚠️ No valid student data found in the file', 'error'); return;
+      }
+
+      parsedUploadData = result;
+      renderSheetPreview(result);
+    } catch(err) {
+      showToast('❌ Error reading file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderSheetPreview(parsed) {
+  const sheets = Object.keys(parsed);
+  document.getElementById('uploadPreview').style.display = 'block';
+  document.getElementById('doImportBtn').style.display = 'inline-flex';
+
+  const listEl = document.getElementById('sheetList');
+  listEl.innerHTML = sheets.map(name => {
+    const count = parsed[name].length;
+    const isExisting = TABS.includes(name);
+    const dotClass = isExisting ? (importMode === 'addtabs' ? '' : 'update') : 'new';
+    let statusText = '', statusClass = '';
+    if (!isExisting) { statusText = '✦ New Tab'; statusClass = 'new-tab'; }
+    else if (importMode === 'replace') { statusText = '↺ Replace'; statusClass = 'updating'; }
+    else if (importMode === 'merge') { statusText = '⇄ Merge'; statusClass = 'updating'; }
+    else { statusText = '— Skip'; statusClass = ''; }
+
+    return `<div class="sheet-item">
+      <div class="sheet-item-left">
+        <div class="sheet-dot ${dotClass}"></div>
+        <span class="sheet-name">${name}</span>
+        <span class="sheet-count">${count} records</span>
+      </div>
+      <span class="sheet-status ${statusClass}">${statusText}</span>
+    </div>`;
+  }).join('');
+}
+
+function doImport() {
+  if (!parsedUploadData) return;
+  const sheets = Object.keys(parsedUploadData);
+  let imported = 0, skipped = 0, added = 0, updated = 0;
+
+  // Show progress
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('progressBar').style.width = '0%';
+
+  sheets.forEach((sheetName, idx) => {
+    const rows = parsedUploadData[sheetName];
+    const isExisting = TABS.includes(sheetName);
+
+    if (importMode === 'addtabs') {
+      if (!isExisting) {
+        TABS.push(sheetName);
+        TAB_LABELS[sheetName] = sheetName.replace(/_/g, ' ');
+        data[sheetName] = rows;
+        added += rows.length;
+        imported++;
+      } else { skipped++; }
+
+    } else if (importMode === 'replace') {
+      if (!isExisting) {
+        TABS.push(sheetName);
+        TAB_LABELS[sheetName] = sheetName.replace(/_/g, ' ');
+      }
+      data[sheetName] = rows;
+      imported++;
+      added += rows.length;
+
+    } else if (importMode === 'merge') {
+      if (!isExisting) {
+        TABS.push(sheetName);
+        TAB_LABELS[sheetName] = sheetName.replace(/_/g, ' ');
+        data[sheetName] = [];
+      }
+      // Merge by Student Id
+      rows.forEach(newRow => {
+        const sid = newRow['Student Id'];
+        if (sid) {
+          const existIdx = data[sheetName].findIndex(r => r['Student Id'] === sid);
+          if (existIdx >= 0) {
+            data[sheetName][existIdx] = { ...data[sheetName][existIdx], ...newRow };
+            updated++;
+          } else {
+            data[sheetName].push(newRow);
+            added++;
+          }
+        } else {
+          data[sheetName].push(newRow);
+          added++;
+        }
+      });
+      imported++;
+    }
+
+    // Animate progress
+    setTimeout(() => {
+      document.getElementById('progressBar').style.width = ((idx+1)/sheets.length*100) + '%';
+    }, idx * 80);
+  });
+
+  setTimeout(() => {
+    document.getElementById('uploadSummary').style.display = 'block';
+    document.getElementById('uploadSummary').innerHTML =
+      `✅ Import complete — <strong>${imported}</strong> sheet(s) processed · <strong>${added}</strong> records added · <strong>${updated}</strong> updated · <strong>${skipped}</strong> skipped`;
+
+    renderStats(); renderTabs(); renderTable();
+    showToast(`✅ Imported ${added + updated} records from ${imported} sheet(s)`, 'success');
+
+    setTimeout(() => closeModal('uploadModal'), 1800);
+  }, sheets.length * 80 + 300);
+}
+
+// ============================================================
+//  DOWNLOAD TEMPLATE
+// ============================================================
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+  const TEMPLATE_TABS = ['Student_Data_All', '2024-25_CWSN', '2025-26_CWSN', '2026-27_CWSN'];
+  const headers = ALL_FIELDS.map(f => f.key);
+  const sampleRow = ALL_FIELDS.map(f => {
+    const samples = {
+      'Student Name': 'SAMPLE STUDENT', 'Student Id': '20240000001',
+      'Admission Number': '11000', 'DOB': 'Jan 1 2015',
+      'Class & Section': '5-A', 'Identification': '2024',
+      "Father's Name": 'FATHER NAME', "Mother's Name": 'MOTHER NAME',
+      'Address': 'HOUSE NO, COLONY NAME, DELHI', 'Mobile No': '9999999999',
+      'Bank Name': 'CANARA BANK', 'IFSC': 'CNRB0002010',
+      'Types Of Disability': 'LD', 'UDID Status': 'Applied',
+    };
+    return samples[f.key] || '';
+  });
+
+  TEMPLATE_TABS.forEach(tab => {
+    const wsData = [
+      ['CWSN Details - MCPS JJ Shadipur - 1 2160016', ...Array(headers.length - 1).fill('')],
+      Array(headers.length).fill(''),
+      headers,
+      sampleRow,
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, tab);
+  });
+
+  XLSX.writeFile(wb, 'CWSN_Import_Template.xlsx');
+  showToast('📄 Template downloaded! Fill it and import back.', 'success');
 }
 
 // ============================================================
