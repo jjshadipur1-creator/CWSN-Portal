@@ -589,49 +589,92 @@ function showSaveIndicator(state, msg) {
 }
 
 // ============================================================
-//  PERSISTENCE — window.storage API
+//  PERSISTENCE — localStorage (primary) + window.storage (secondary)
+//  Works on phone browsers, downloaded HTML files, and Claude artifacts
 // ============================================================
+
+function buildPayload() {
+  return JSON.stringify({ data, tabs: TABS, tabLabels: TAB_LABELS });
+}
+
+function applyPayload(raw) {
+  const parsed = JSON.parse(raw);
+  if (!parsed.data || typeof parsed.data !== 'object') return false;
+  data = parsed.data;
+  if (parsed.tabs && Array.isArray(parsed.tabs)) {
+    TABS.length = 0;
+    parsed.tabs.forEach(t => TABS.push(t));
+  }
+  if (parsed.tabLabels) Object.assign(TAB_LABELS, parsed.tabLabels);
+  return true;
+}
+
+// Save to localStorage synchronously, then try window.storage async
 async function persistData() {
   showSaveIndicator('saving', 'Saving…');
+  const payload = buildPayload();
+  let savedOk = false;
+
+  // 1 — localStorage (always try first, works everywhere)
   try {
-    const payload = JSON.stringify({ data, tabs: TABS, tabLabels: TAB_LABELS });
-    await window.storage.set(STORAGE_KEY_DATA, payload);
-    showSaveIndicator('saved', 'All changes saved');
-  } catch (err) {
-    console.error('Storage save error:', err);
-    showSaveIndicator('error', 'Save failed — check storage');
+    localStorage.setItem(STORAGE_KEY_DATA, payload);
+    savedOk = true;
+  } catch (e) {
+    console.warn('localStorage save failed:', e);
+  }
+
+  // 2 — window.storage (Claude artifact iframe)
+  if (typeof window.storage !== 'undefined' && window.storage) {
+    try {
+      await window.storage.set(STORAGE_KEY_DATA, payload);
+      savedOk = true;
+    } catch (e) {
+      console.warn('window.storage save failed:', e);
+    }
+  }
+
+  if (savedOk) {
+    showSaveIndicator('saved', 'Saved ✓');
+  } else {
+    showSaveIndicator('error', 'Save failed — storage unavailable');
   }
 }
 
+// Load: try localStorage first, then window.storage, then seed
 async function loadPersistedData() {
-  // Check if window.storage is available
-  if (typeof window.storage === 'undefined' || !window.storage) {
-    console.warn('window.storage not available — using seed data only');
-    data = JSON.parse(JSON.stringify(SEED));
-    return false;
-  }
-
+  // 1 — Try localStorage (fastest, works offline on phone)
   try {
-    const result = await window.storage.get(STORAGE_KEY_DATA);
-    if (result && result.value) {
-      const parsed = JSON.parse(result.value);
-      if (parsed.data && typeof parsed.data === 'object') {
-        data = parsed.data;
-        if (parsed.tabs && Array.isArray(parsed.tabs)) {
-          TABS.length = 0;
-          parsed.tabs.forEach(t => TABS.push(t));
-        }
-        if (parsed.tabLabels) {
-          Object.assign(TAB_LABELS, parsed.tabLabels);
-        }
-        return true;
+    const raw = localStorage.getItem(STORAGE_KEY_DATA);
+    if (raw) {
+      if (applyPayload(raw)) {
+        console.log('Loaded from localStorage');
+        return 'local';
       }
     }
-  } catch (err) {
-    console.warn('Could not load from storage:', err);
+  } catch (e) {
+    console.warn('localStorage read failed:', e);
   }
-  // Fall back to seed
+
+  // 2 — Try window.storage (Claude artifact)
+  if (typeof window.storage !== 'undefined' && window.storage) {
+    try {
+      const result = await window.storage.get(STORAGE_KEY_DATA);
+      if (result && result.value) {
+        if (applyPayload(result.value)) {
+          // Mirror into localStorage so next load is instant
+          try { localStorage.setItem(STORAGE_KEY_DATA, result.value); } catch(e) {}
+          console.log('Loaded from window.storage');
+          return 'cloud';
+        }
+      }
+    } catch (e) {
+      console.warn('window.storage read failed:', e);
+    }
+  }
+
+  // 3 — Fall back to seed data
   data = JSON.parse(JSON.stringify(SEED));
+  console.log('Using seed data');
   return false;
 }
 
@@ -642,8 +685,9 @@ function openResetModal() { document.getElementById('resetModal').classList.add(
 
 async function confirmReset() {
   closeModal('resetModal');
-  // Wipe storage
-  try { await window.storage.delete(STORAGE_KEY_DATA); } catch(e) {}
+  // Wipe all storage layers
+  try { localStorage.removeItem(STORAGE_KEY_DATA); } catch(e) {}
+  try { if (window.storage) await window.storage.delete(STORAGE_KEY_DATA); } catch(e) {}
   // Restore state from seed
   data = JSON.parse(JSON.stringify(SEED));
   TABS.length = 0;
@@ -1158,8 +1202,7 @@ function downloadTemplate() {
 //  INIT — load from storage, then render
 // ============================================================
 async function init() {
-  const loadedFromStorage = await loadPersistedData();
-  // Hide loading screen
+  const source = await loadPersistedData();
   const ls = document.getElementById('loadingScreen');
   ls.classList.add('hidden');
   setTimeout(() => { ls.style.display = 'none'; }, 400);
@@ -1168,9 +1211,9 @@ async function init() {
   renderTabs();
   renderTable();
 
-  if (loadedFromStorage) {
-    showSaveIndicator('saved', 'Data loaded from storage');
-  }
+  if (source === 'local') showSaveIndicator('saved', 'Loaded from device storage');
+  else if (source === 'cloud') showSaveIndicator('saved', 'Loaded from cloud storage');
+  else showSaveIndicator('saved', 'Using default data');
 }
 
 init();
